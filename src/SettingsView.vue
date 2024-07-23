@@ -48,13 +48,15 @@ export default {
 
   data() {
     return {
-      name:            this.mach.get_name(),
-      initial_config:  undefined,
-      config:          undefined,
-      group:           '',
-      new_group:       '',
-      confirmed:       false,
-      unlocked:        this.$util.retrieve_bool('fah-settings-unlocked'),
+      name:           this.mach.get_name(),
+      initial_config: undefined,
+      config:         undefined,
+      group:          '',
+      new_group:      '',
+      confirmed:      false,
+      unlocked:       this.$util.retrieve_bool('fah-settings-unlocked'),
+      address:        '',
+      orig_address:   '',
 
       confirm_dialog_buttons: [
         {name: 'cancel',  icon: 'times'},
@@ -73,6 +75,7 @@ export default {
   computed: {
     have_account() {return this.$adata.created},
     connected()    {return this.mach.is_connected()},
+    direct()       {return this.mach.is_direct()},
     linked()       {return this.mach.is_linked()},
     valid_name()   {return /^[\w\.-]{1,64}$/.test(this.name)},
 
@@ -108,13 +111,19 @@ export default {
 
 
     config_modified() {
-      return !this.$util.isEqual(this.initial_config, this.config)
+      if (this.config)
+        return !this.$util.isEqual(this.initial_config, this.config)
     },
 
 
+    addr_modified() {return this.orig_address != this.address},
+    valid_addr() {return !this.direct || this.address},
+
+
     modified() {
-      if (!this.valid_name) return false
+      if (!this.valid_name || !this.valid_addr) return false
       if (this.name_modified) return true
+      if (this.addr_modified) return true
       if (!this.config) return false
       return this.config_modified
     },
@@ -209,6 +218,8 @@ export default {
 
 
     init() {
+      this.address = this.orig_address = this.mach.get_address()
+
       let config = this.data.config
       if (this.config || !config || this.$util.isEmpty(config)) return
 
@@ -231,6 +242,10 @@ export default {
 
     async save() {
       if (this.name_modified)   await this.mach.save_name(this.name)
+      if (this.addr_modified) {
+        this.$util.set_direct_address(this.address)
+        this.$direct.set_address(this.address)
+      }
       if (this.config_modified) await this.mach.configure(this.config)
       this.close()
     },
@@ -320,7 +335,7 @@ Dialog.new-group-dialog(ref="new_group_dialog", buttons="Create")
             this account by clicking on the #[.fa.fa-link] icon.
 
       .setting
-        label Name
+        HelpBalloon(name="Name"): p Set the machine display name.
         input(v-model="name", pattern="[\\w.\\-]{1,64}")
 
         .setting-actions
@@ -329,6 +344,11 @@ Dialog.new-group-dialog(ref="new_group_dialog", buttons="Create")
 
           Button.button-icon(v-if="!linked", @click="link", icon="link",
             :disabled="!valid_name", title="Link machine to this account")
+
+      .setting(v-if="direct")
+        HelpBalloon(name="Address"): p.
+          Set the address and port for the directly connected client.
+        input(v-model="address")
 
     fieldset.settings.view-panel(v-if="!have_account && config")
       legend Account Settings

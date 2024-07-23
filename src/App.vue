@@ -32,7 +32,6 @@ import PauseDialog      from './PauseDialog.vue'
 import NewAccountDialog from './NewAccountDialog.vue'
 import MessageDialog    from './MessageDialog.vue'
 import LoginDialog      from './LoginDialog.vue'
-import ConnectDialog    from './ConnectDialog.vue'
 import {watchEffect}    from 'vue'
 
 
@@ -44,14 +43,12 @@ function set_doc_class(enable, name) {
 export default {
   components: {
     Pacify, PauseDialog, NewAccountDialog, MessageDialog, LoginDialog,
-    ConnectDialog,
   },
 
 
   mounted() {
     this.$ctx.$root = this.$root
 
-    window.addEventListener('keyup', this.on_key_up)
     watchEffect(() => this.check_appearance())
     this.$api.set_error_handler(this.error_handler)
     this.check_account()
@@ -59,18 +56,6 @@ export default {
 
 
   methods: {
-    async on_key_up(e) {
-      if (!e.ctrlKey || e.key != 'c') return
-
-      let dialog = this.$refs.connect_dialog
-      let response = await dialog.exec()
-      if (response == 'connect') {
-        this.$util.set_direct_address(dialog.address)
-        this.$direct.set_address(dialog.address)
-      }
-    },
-
-
     set_wide(wide) {set_doc_class(wide, 'theme-wide')},
     check_wide() {this.set_wide((this.$adata.config || {}).wide)},
 
@@ -206,7 +191,6 @@ PauseDialog(ref="pause_dialog")
 NewAccountDialog(ref="new_account_dialog")
 MessageDialog(ref="message_dialog")
 LoginDialog(ref="login_dialog")
-ConnectDialog(ref="connect_dialog")
 </template>
 
 <style lang="stylus">

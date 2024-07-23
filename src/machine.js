@@ -90,6 +90,7 @@ class Machine {
   get_conn() {return this.conn}
   set_conn(conn) {this.conn = conn}
   is_direct() {return this.get_conn() && this.get_conn().is_direct()}
+  get_address() {if (this.is_direct()) return this.get_conn().address}
 
 
   get_units() {
